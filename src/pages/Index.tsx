@@ -20,11 +20,14 @@ export default function Index() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: tasks = [], isLoading } = useQuery({
+  const { data: tasksData, isLoading } = useQuery({
     queryKey: ["tasks"],
     queryFn: getTasks,
     initialData: [], // Ensure we always have an array
   });
+
+  // Ensure tasks is always an array
+  const tasks = Array.isArray(tasksData) ? tasksData : [];
 
   const createMutation = useMutation({
     mutationFn: (task: CreateTaskInput) => createTask(task),
