@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { TaskCard } from "@/components/TaskCard";
 import { TaskForm } from "@/components/TaskForm";
 import {
@@ -11,6 +11,7 @@ import {
   getTasks,
   updateTask,
   type Task,
+  type CreateTaskInput,
 } from "@/lib/api";
 
 export default function Index() {
@@ -25,7 +26,7 @@ export default function Index() {
   });
 
   const createMutation = useMutation({
-    mutationFn: createTask,
+    mutationFn: (task: CreateTaskInput) => createTask(task),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       toast({ title: "Task created successfully" });
@@ -39,7 +40,7 @@ export default function Index() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, ...task }) => updateTask(id, task),
+    mutationFn: ({ id, ...task }: Task) => updateTask(id, task),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       toast({ title: "Task updated successfully" });
@@ -116,7 +117,7 @@ export default function Index() {
         }}
         onSubmit={async (task) => {
           if (editingTask) {
-            await updateMutation.mutateAsync({ id: editingTask.id, ...task });
+            await updateMutation.mutateAsync({ ...task, id: editingTask.id });
           } else {
             await createMutation.mutateAsync(task);
           }
