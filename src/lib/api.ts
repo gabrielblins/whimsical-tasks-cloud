@@ -43,6 +43,6 @@ export const deleteTask = async (id: number): Promise<Task> => {
 };
 
 export const updateTaskCompletion = async (id: number, completed: boolean): Promise<Task> => {
-  const response = await api.patch(`/tasks/${id}`, { completed });
+  const response = await api.patch(`/tasks/${id}/complete`, { completed });
   return response.data;
 };
