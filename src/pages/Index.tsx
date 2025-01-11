@@ -1,14 +1,128 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { TaskCard } from "@/components/TaskCard";
+import { TaskForm } from "@/components/TaskForm";
+import {
+  createTask,
+  deleteTask,
+  getTasks,
+  updateTask,
+  type Task,
+} from "@/lib/api";
 
-const Index = () => {
+export default function Index() {
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: tasks = [], isLoading } = useQuery({
+    queryKey: ["tasks"],
+    queryFn: getTasks,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: createTask,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast({ title: "Task created successfully" });
+    },
+    onError: () => {
+      toast({
+        title: "Error creating task",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, ...task }) => updateTask(id, task),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast({ title: "Task updated successfully" });
+    },
+    onError: () => {
+      toast({
+        title: "Error updating task",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteTask,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast({ title: "Task deleted successfully" });
+    },
+    onError: () => {
+      toast({
+        title: "Error deleting task",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEdit = (task: Task) => {
+    setEditingTask(task);
+    setIsFormOpen(true);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8 flex items-center justify-between">
+        <h1 className="text-4xl font-bold text-foreground">Tasks</h1>
+        <Button
+          onClick={() => {
+            setEditingTask(undefined);
+            setIsFormOpen(true);
+          }}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Add Task
+        </Button>
       </div>
+
+      {isLoading ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[...Array(3)].map((_, i) => (
+            <div
+              key={i}
+              className="h-[200px] animate-pulse rounded-lg bg-muted"
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {tasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onEdit={handleEdit}
+              onDelete={(id) => deleteMutation.mutate(id)}
+            />
+          ))}
+        </div>
+      )}
+
+      <TaskForm
+        open={isFormOpen}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditingTask(undefined);
+        }}
+        onSubmit={async (task) => {
+          if (editingTask) {
+            await updateMutation.mutateAsync({ id: editingTask.id, ...task });
+          } else {
+            await createMutation.mutateAsync(task);
+          }
+        }}
+        initialTask={editingTask}
+      />
     </div>
   );
-};
-
-export default Index;
+}
