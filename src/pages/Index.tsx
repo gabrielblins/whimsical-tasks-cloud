@@ -23,6 +23,7 @@ export default function Index() {
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["tasks"],
     queryFn: getTasks,
+    initialData: [], // Ensure we always have an array
   });
 
   const createMutation = useMutation({
@@ -98,7 +99,7 @@ export default function Index() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {tasks.map((task) => (
+          {tasks.map((task: Task) => (
             <TaskCard
               key={task.id}
               task={task}
