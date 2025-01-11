@@ -1,6 +1,7 @@
 import { Pencil, Trash2 } from "lucide-react";
 import { Task } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -13,13 +14,23 @@ interface TaskCardProps {
   task: Task;
   onEdit: (task: Task) => void;
   onDelete: (id: number) => void;
+  onComplete: (id: number, completed: boolean) => void;
 }
 
-export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
+export function TaskCard({ task, onEdit, onDelete, onComplete }: TaskCardProps) {
   return (
-    <Card className="task-card">
+    <Card className={`task-card ${task.completed ? 'opacity-60' : ''}`}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg font-semibold">{task.title}</CardTitle>
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            checked={task.completed}
+            onCheckedChange={(checked) => onComplete(task.id, checked as boolean)}
+            className="h-5 w-5"
+          />
+          <CardTitle className={`text-lg font-semibold ${task.completed ? 'line-through' : ''}`}>
+            {task.title}
+          </CardTitle>
+        </div>
         <div className="flex space-x-2">
           <Button
             variant="ghost"
@@ -40,7 +51,9 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <CardDescription>{task.description}</CardDescription>
+        <CardDescription className={task.completed ? 'line-through' : ''}>
+          {task.description}
+        </CardDescription>
       </CardContent>
     </Card>
   );

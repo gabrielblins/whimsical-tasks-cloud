@@ -10,6 +10,7 @@ import {
   deleteTask,
   getTasks,
   updateTask,
+  updateTaskCompletion,
   type Task,
   type CreateTaskInput,
 } from "@/lib/api";
@@ -23,10 +24,9 @@ export default function Index() {
   const { data: tasksData, isLoading } = useQuery({
     queryKey: ["tasks"],
     queryFn: getTasks,
-    initialData: [], // Ensure we always have an array
+    initialData: [],
   });
 
-  // Ensure tasks is always an array
   const tasks = Array.isArray(tasksData) ? tasksData : [];
 
   const createMutation = useMutation({
@@ -57,6 +57,21 @@ export default function Index() {
     },
   });
 
+  const completeMutation = useMutation({
+    mutationFn: ({ id, completed }: { id: number; completed: boolean }) =>
+      updateTaskCompletion(id, completed),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast({ title: "Task status updated" });
+    },
+    onError: () => {
+      toast({
+        title: "Error updating task status",
+        variant: "destructive",
+      });
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: deleteTask,
     onSuccess: () => {
@@ -74,6 +89,10 @@ export default function Index() {
   const handleEdit = (task: Task) => {
     setEditingTask(task);
     setIsFormOpen(true);
+  };
+
+  const handleComplete = (id: number, completed: boolean) => {
+    completeMutation.mutate({ id, completed });
   };
 
   return (
@@ -108,6 +127,7 @@ export default function Index() {
               task={task}
               onEdit={handleEdit}
               onDelete={(id) => deleteMutation.mutate(id)}
+              onComplete={handleComplete}
             />
           ))}
         </div>
